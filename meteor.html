@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流星雨</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+  }
+  #wish {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 2s ease;
+    text-shadow: 0 0 20px #fff, 0 0 40px #aaf;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  #wish.show {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+<div id="wish">刘罔归天天开心</div>
+
+<script>
+  const canvas = document.getElementById('sky');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 星星背景
+  const stars = [];
+  for (let i = 0; i < 120; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.3,
+      a: Math.random() * 0.7 + 0.3
+    });
+  }
+
+  // 流星
+  const meteors = [];
+  function newMeteor() {
+    const startX = Math.random() * W * 1.5 - W * 0.5;
+    const startY = -50;
+    const len = 100 + Math.random() * 150;
+    const speed = 6 + Math.random() * 6;
+    const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.3; // 约 45 度斜线
+    meteors.push({
+      x: startX,
+      y: startY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      len: len,
+      life: 1
+    });
+  }
+
+  // 每 250ms 生成一颗流星
+  setInterval(newMeteor, 250);
+
+  function draw() {
+    // 拖尾效果：半透明黑覆盖
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(0, 0, W, H);
+
+    // 星星
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255, 255, 255, ${s.a})`;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 流星
+    for (let i = meteors.length - 1; i >= 0; i--) {
+      const m = meteors[i];
+      const tailX = m.x - m.vx * (m.len / 10);
+      const tailY = m.y - m.vy * (m.len / 10);
+
+      const grad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
+
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(m.x, m.y);
+      ctx.stroke();
+
+      // 流星头部亮点
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+      ctx.arc(m.x, m.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      m.x += m.vx;
+      m.y += m.vy;
+
+      if (m.x > W + 100 || m.y > H + 100) {
+        meteors.splice(i, 1);
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // 5 秒后显示文字
+  setTimeout(() => {
+    document.getElementById('wish').classList.add('show');
+  }, 5000);
+</script>
+
+</body>
+</html>
